@@ -12,12 +12,71 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscureText = true;
   bool _rememberMe = false;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    // Reset error message
+    setState(() {
+      _errorMessage = null;
+      _isLoading = true;
+    });
+
+    // Basic validation
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      setState(() {
+        _errorMessage = "Please fill in all fields";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Email format validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(_emailController.text)) {
+      setState(() {
+        _errorMessage = "Please enter a valid email address";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      // Call auth service
+      final success = await AuthService.login(
+        _emailController.text.trim(), 
+        _passwordController.text
+      );
+
+      if (success) {
+        if (!mounted) return;
+        
+        // Navigate to dashboard on success
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DashboardPage(),
+          ),
+        );
+      } else {
+        setState(() {
+          _errorMessage = "Invalid email or password";
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "An error occurred. Please try again.";
+        _isLoading = false;
+      });
+    }
   }
 
   @override 
@@ -54,6 +113,31 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 40),
+            
+            // Error message display
+            if (_errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: dangerColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: dangerColor.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: dangerColor),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(color: dangerColor),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -131,7 +215,16 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Add forgot password functionality
+                    // Forgot password functionality
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Password reset functionality will be implemented here',
+                          style: TextStyle(color: whiteColor),
+                        ),
+                        backgroundColor: primaryColor,
+                      ),
+                    );
                   },
                   child: Text(
                     "Forgot Password?",
@@ -145,9 +238,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
-                // Add login functionality
-              },
+              onPressed: _isLoading ? null : _handleLogin,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: whiteColor,
@@ -155,14 +246,38 @@ class _LoginPageState extends State<LoginPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                disabledBackgroundColor: Colors.grey,
               ),
-              child: const Text(
-                "Login",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: _isLoading 
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: whiteColor,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        "Logging in...",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: whiteColor,
+                        ),
+                      ),
+                    ],
+                  )
+                : const Text(
+                    "Login",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
             ),
             const SizedBox(height: 30),
             Row(

@@ -15,6 +15,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscureText = true;
   bool _obscureConfirmText = true;
   bool _agreeToTerms = false;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -23,6 +25,106 @@ class _RegisterPageState extends State<RegisterPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    // Reset error message
+    setState(() {
+      _errorMessage = null;
+      _isLoading = true;
+    });
+
+    // Basic validation
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      setState(() {
+        _errorMessage = "Please fill in all fields";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Email format validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(_emailController.text)) {
+      setState(() {
+        _errorMessage = "Please enter a valid email address";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Password match validation
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _errorMessage = "Passwords do not match";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Password strength validation
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        _errorMessage = "Password must be at least 6 characters long";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Agreement validation
+    if (!_agreeToTerms) {
+      setState(() {
+        _errorMessage = "You must agree to the Terms of Service and Privacy Policy";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      // Call auth service
+      final success = await AuthService.register(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        _passwordController.text,
+        _confirmPasswordController.text,
+      );
+
+      if (success) {
+        if (!mounted) return;
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Registration successful!',
+              style: TextStyle(color: whiteColor),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Navigate to dashboard on success
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DashboardPage(),
+          ),
+        );
+      } else {
+        setState(() {
+          _errorMessage = "Registration failed. Please try again.";
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "An error occurred. Please try again.";
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -59,6 +161,31 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
             const SizedBox(height: 30),
+            
+            // Error message display
+            if (_errorMessage != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: dangerColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: dangerColor.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: dangerColor),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(color: dangerColor),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
             TextField(
               controller: _nameController,
               keyboardType: TextInputType.name,
@@ -207,11 +334,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: _agreeToTerms 
-                ? () {
-                  // Add registration functionality
-                }
-                : null,
+              onPressed: _isLoading ? null : (_agreeToTerms ? _handleRegister : null),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: whiteColor,
@@ -221,13 +344,36 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 disabledBackgroundColor: Colors.grey,
               ),
-              child: const Text(
-                "Register",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              child: _isLoading 
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: whiteColor,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        "Creating account...",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: whiteColor,
+                        ),
+                      ),
+                    ],
+                  )
+                : const Text(
+                    "Register",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
             ),
             const SizedBox(height: 30),
             Row(
