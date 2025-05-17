@@ -1,19 +1,16 @@
 part of 'pages.dart';
 
-// Simul Authentication - buat konek ke Backend
+// Simul Authentication - buat connect ke Backend
 class AuthService {
   static Future<bool> login(String email, String password) async {
-    // Simul API call delay
     await Future.delayed(const Duration(seconds: 1));
     
     return email.isNotEmpty && password.isNotEmpty;
   }
   
   static Future<bool> register(String name, String email, String password, String confirmPassword) async {
-    // Simul API call delay
     await Future.delayed(const Duration(seconds: 1));
     
-    // Basic validation
     return name.isNotEmpty && 
            email.isNotEmpty && 
            password.isNotEmpty && 
@@ -22,66 +19,49 @@ class AuthService {
 }
 
 class DashboardPage extends StatefulWidget {
-  final String patientName;
-  final String patientId;
-
-  const DashboardPage({
-    super.key, 
-    this.patientName = "Viktor", 
-    this.patientId = "ABC123456789"
-  });
+  const DashboardPage({super.key});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Data to-do list
-  final List<Map<String, dynamic>> _scheduleItems = [
+  // Dummy data for patient info
+  final Map<String, dynamic> patientInfo = {
+    'name': 'Ujang',
+    'birthDate': '17-08-1945',
+    'gender': 'Pria',
+    'illness': 'Stroke',
+    'deviceId': 'CM-1234'
+  };
+
+  // Dummy data for distance tracking
+  double currentDistance = 5.2; // in meters
+  String distanceStatus = 'Normal';
+  Color statusColor = Colors.green;
+
+  // Dummy data for schedule/to-do list
+  final List<Map<String, dynamic>> scheduleItems = [
     {
-      'title': 'Minum obat pagi',
+      'title': 'Minum obat',
       'time': '08:00 AM',
-      'isCompleted': false,
+      'completed': true,
     },
     {
       'title': 'Cek tekanan darah',
-      'time': '10:30 AM',
-      'isCompleted': true,
-    },
-    {
-      'title': 'Makan siang',
       'time': '12:00 PM',
-      'isCompleted': false,
+      'completed': false,
     },
     {
-      'title': 'Jalan Sore',
-      'time': '04:00 PM',
-      'isCompleted': false,
-    },
-    {
-      'title': 'Minum obat malam',
-      'time': '08:00 PM',
-      'isCompleted': false,
+      'title': 'Jalan sore',
+      'time': '05:00 PM',
+      'completed': false,
     },
   ];
 
-  // Patient health data (yang dari sensor gua gatau apa aja hehe)
-  final Map<String, dynamic> _healthData = {
-    'heartRate': 78,
-    'bloodPressure': '120/80',
-    'oxygenLevel': 98,
-    'temperature': 36.5,
-    'glucose': 95,
-    'lastUpdated': '10 minutes ago'
-  };
-
-  // Mockup jarak
-  final double _distance = 0.5; // in kilometers
-
-  // Nambahin schedule items
+  // Controller nambahin schedule item
   final TextEditingController _newTaskController = TextEditingController();
   final TextEditingController _newTimeController = TextEditingController();
-  TimeOfDay _selectedTime = TimeOfDay.now();
 
   @override
   void dispose() {
@@ -90,13 +70,25 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _newTimeController.text = picked.format(context);
+      });
+    }
+  }
+
   void _addScheduleItem() {
     if (_newTaskController.text.isNotEmpty && _newTimeController.text.isNotEmpty) {
       setState(() {
-        _scheduleItems.add({
+        scheduleItems.add({
           'title': _newTaskController.text,
           'time': _newTimeController.text,
-          'isCompleted': false,
+          'completed': false,
         });
         _newTaskController.clear();
         _newTimeController.clear();
@@ -105,436 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _toggleTaskCompletion(int index) {
-    setState(() {
-      _scheduleItems[index]['isCompleted'] = !_scheduleItems[index]['isCompleted'];
-    });
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-        // Format time to AM/PM format
-        final hour = _selectedTime.hourOfPeriod;
-        final minute = _selectedTime.minute.toString().padLeft(2, '0');
-        final period = _selectedTime.period == DayPeriod.am ? 'AM' : 'PM';
-        _newTimeController.text = '$hour:$minute $period';
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        backgroundColor: primaryColor,
-        foregroundColor: whiteColor,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // Add notification functionality
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              // Add profile functionality
-            },
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.all(defaultMargin),
-          children: [
-            // Patient Info Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: primaryColor,
-                      child: Text(
-                        widget.patientName.substring(0, 1),
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: whiteColor,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.patientName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Patient ID: ${widget.patientId}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Distance Tracker
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, color: primaryColor),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Distance from Patient',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            '${_distance.toStringAsFixed(1)} km',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: _distance < 1 ? Colors.green : primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _distance < 1 ? 'You are nearby' : 'Distance to patient',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    LinearProgressIndicator(
-                      value: 1 - (_distance / 5), // Scale from 0-5km
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _distance < 1 ? Colors.green : primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Health Information
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.favorite, color: dangerColor),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Health Information',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          'Updated: ${_healthData['lastUpdated']}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _buildHealthIndicator(
-                          icon: Icons.favorite_border,
-                          label: 'Heart Rate',
-                          value: '${_healthData['heartRate']}',
-                          unit: 'bpm',
-                          color: dangerColor,
-                        ),
-                        _buildHealthIndicator(
-                          icon: Icons.speed,
-                          label: 'Blood Pressure',
-                          value: _healthData['bloodPressure'],
-                          unit: 'mmHg',
-                          color: Colors.blue,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _buildHealthIndicator(
-                          icon: Icons.air,
-                          label: 'Oxygen',
-                          value: '${_healthData['oxygenLevel']}',
-                          unit: '%',
-                          color: Colors.lightBlue,
-                        ),
-                        _buildHealthIndicator(
-                          icon: Icons.thermostat,
-                          label: 'Temperature',
-                          value: '${_healthData['temperature']}',
-                          unit: '°C',
-                          color: Colors.orange,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _buildHealthIndicator(
-                          icon: Icons.bloodtype,
-                          label: 'Glucose',
-                          value: '${_healthData['glucose']}',
-                          unit: 'mg/dL',
-                          color: Colors.purple,
-                          isLastRow: true,
-                        ),
-                        Expanded(child: Container()), // Empty container for alignment
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Schedule/To-Do List
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.calendar_today, color: primaryColor),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Schedule',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Add'),
-                          onPressed: () {
-                            // Show add task dialog
-                            _showAddTaskDialog(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: whiteColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    for (int i = 0; i < _scheduleItems.length; i++)
-                      _buildScheduleItem(i),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHealthIndicator({
-    required IconData icon,
-    required String label,
-    required String value,
-    required String unit,
-    required Color color,
-    bool isLastRow = false,
-  }) {
-    return Expanded(
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      unit,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScheduleItem(int index) {
-    final item = _scheduleItems[index];
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: CheckboxListTile(
-          value: item['isCompleted'],
-          onChanged: (_) => _toggleTaskCompletion(index),
-          title: Text(
-            item['title'],
-            style: TextStyle(
-              decoration: item['isCompleted'] ? TextDecoration.lineThrough : null,
-              color: item['isCompleted'] ? Colors.grey : Colors.black,
-            ),
-          ),
-          subtitle: Row(
-            children: [
-              Icon(
-                Icons.access_time,
-                size: 16,
-                color: Colors.grey[600],
-              ),
-              const SizedBox(width: 4),
-              Text(
-                item['time'],
-                style: TextStyle(
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-          secondary: Container(
-            width: 4,
-            height: 40,
-            decoration: BoxDecoration(
-              color: item['isCompleted'] ? Colors.green : primaryColor,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          activeColor: primaryColor,
-          checkboxShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        ),
-      ),
-    );
-  }
-
-  void _showAddTaskDialog(BuildContext context) {
+  void _showAddTaskDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -545,41 +108,45 @@ class _DashboardPageState extends State<DashboardPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _newTaskController,
-              decoration: InputDecoration(
-                labelText: 'Task Name',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _newTaskController,
+                decoration: InputDecoration(
+                  labelText: 'Task',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: Icon(Icons.task, color: primaryColor),
                 ),
-                prefixIcon: Icon(Icons.task, color: primaryColor),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _newTimeController,
-              readOnly: true,
-              onTap: () => _selectTime(context),
-              decoration: InputDecoration(
-                labelText: 'Time',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () => _selectTime(context),
+                child: AbsorbPointer(
+                  child: TextField(
+                    controller: _newTimeController,
+                    decoration: InputDecoration(
+                      labelText: 'Time',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: Icon(Icons.access_time, color: primaryColor),
+                    ),
+                  ),
                 ),
-                prefixIcon: Icon(Icons.access_time, color: primaryColor),
-                suffixIcon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(color: Colors.grey[600]),
             ),
           ),
           ElevatedButton(
@@ -591,12 +158,402 @@ class _DashboardPageState extends State<DashboardPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Add Task'),
+            child: const Text('Add'),
           ),
         ],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+      ),
+    );
+  }
+
+  void _toggleTaskCompletion(int index) {
+    setState(() {
+      scheduleItems[index]['completed'] = !scheduleItems[index]['completed'];
+    });
+  }
+
+  // Update jarak dari WebSocket
+  void _simulateDistanceUpdate() {
+    // GANTI PAKE WEBSOCKET LOGIC YG BENERAN
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted) {
+        setState(() {
+          // Simulate random distance changes
+          currentDistance = (currentDistance + (Random().nextDouble() * 2 - 1)).clamp(0.5, 50.0);
+          
+          // Update status 
+          if (currentDistance < 10) {
+            distanceStatus = 'Normal';
+            statusColor = Colors.green;
+          } else if (currentDistance < 30) {
+            distanceStatus = 'Warning';
+            statusColor = Colors.orange;
+          } else {
+            distanceStatus = 'Alert';
+            statusColor = Colors.red;
+          }
+        });
+        _simulateDistanceUpdate(); 
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _simulateDistanceUpdate();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text('CareMates Dashboard'),
+        backgroundColor: primaryColor,
+        foregroundColor: whiteColor,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await Future.delayed(const Duration(seconds: 1));
+            if (mounted) {
+              setState(() {
+                // Update distance (ini demo aja)
+                currentDistance = (currentDistance + (Random().nextDouble() * 2 - 1)).clamp(0.5, 50.0);
+              });
+            }
+          },
+          child: ListView(
+            padding: EdgeInsets.all(defaultMargin),
+            children: [
+              // Patient Info Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundColor: Colors.grey[300],
+                            child: Text(
+                              patientInfo['name'].substring(0, 1),
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Patient Information',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  patientInfo['name'],
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      _buildPatientInfoRow(Icons.cake, 'Birth Date', patientInfo['birthDate']),
+                      const SizedBox(height: 8),
+                      _buildPatientInfoRow(Icons.person, 'Gender', patientInfo['gender']),
+                      const SizedBox(height: 8),
+                      _buildPatientInfoRow(Icons.medical_services, 'Illness', patientInfo['illness']),
+                      const SizedBox(height: 8),
+                      _buildPatientInfoRow(Icons.devices, 'Device ID', patientInfo['deviceId']),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Distance Tracking Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Distance Tracking',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: statusColor),
+                            ),
+                            child: Text(
+                              distanceStatus,
+                              style: TextStyle(
+                                color: statusColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: 48,
+                            color: statusColor,
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${currentDistance.toStringAsFixed(1)} meters',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Last updated: ${DateFormat('hh:mm a').format(DateTime.now())}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      LinearProgressIndicator(
+                        value: (50 - currentDistance) / 50, // Inverse relationship - closer is better
+                        backgroundColor: Colors.grey[300],
+                        color: statusColor,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // To-Do List Card
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Jadwal & Tasks',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.add_circle, color: primaryColor),
+                            onPressed: _showAddTaskDialog,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ...scheduleItems.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: item['completed'] 
+                                  ? Colors.green.withOpacity(0.1) 
+                                  : Colors.grey.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: item['completed'] 
+                                    ? Colors.green.withOpacity(0.5) 
+                                    : Colors.grey.withOpacity(0.5),
+                              ),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: item['completed'],
+                                  activeColor: primaryColor,
+                                  onChanged: (_) => _toggleTaskCompletion(index),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['title'],
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          decoration: item['completed'] 
+                                              ? TextDecoration.lineThrough 
+                                              : null,
+                                          color: item['completed'] 
+                                              ? Colors.grey[600] 
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                      Text(
+                                        item['time'],
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                  onPressed: () {
+                                    setState(() {
+                                      scheduleItems.removeAt(index);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                      if (scheduleItems.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.task_alt,
+                                  size: 48,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No tasks yet',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: _showAddTaskDialog,
+                                  child: Text(
+                                    'Add a task',
+                                    style: TextStyle(
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPatientInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(icon, color: primaryColor, size: 20),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
