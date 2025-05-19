@@ -14,16 +14,8 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
   DateTime? _birthDate;
   String? _selectedGender;
   String? _selectedDisease;
-  bool _isSearchingDevice = false;
-  bool _deviceFound = false;
   bool _isLoading = false;
   String? _errorMessage;
-  
-  // List of available device serial numbers (simulated data)
-  final List<String> _availableDevices = [
-    "SN001", "SN002", "SN003", "SN004", 
-    "SN005", "SN006", "SN007", "SN008"
-  ];
   
   // List of diseases from your database model
   final List<String> _diseases = [
@@ -64,24 +56,6 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
         _birthDate = picked;
       });
     }
-  }
-
-  void _searchForDevices() {
-    // Simulate device search
-    setState(() {
-      _isSearchingDevice = true;
-    });
-    
-    // Simulate network delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isSearchingDevice = false;
-          _deviceFound = true;
-          _deviceIdController.text = _availableDevices[Random().nextInt(_availableDevices.length)];
-        });
-      }
-    });
   }
 
   Future<void> _submitPairing() async {
@@ -377,97 +351,49 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                     ),
                     const SizedBox(height: 16),
                     
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _deviceIdController,
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              labelText: "Device ID",
-                              labelStyle: TextStyle(color: Colors.grey[600]),
-                              prefixIcon: Icon(Icons.device_hub, color: primaryColor),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: primaryColor),
-                              ),
-                              suffixIcon: _deviceFound 
-                                  ? const Icon(Icons.check_circle, color: Colors.green) 
-                                  : null,
-                            ),
-                          ),
+                    TextField(
+                      controller: _deviceIdController,
+                      decoration: InputDecoration(
+                        labelText: "Device ID",
+                        labelStyle: TextStyle(color: Colors.grey[600]),
+                        prefixIcon: Icon(Icons.device_hub, color: primaryColor),
+                        hintText: "Enter device serial number (e.g. SN001)",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          onPressed: _isSearchingDevice ? null : _searchForDevices,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _isSearchingDevice
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: whiteColor,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  "Scan",
-                                  style: TextStyle(color: whiteColor),
-                                ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
                         ),
-                      ],
-                    ),
-                    
-                    if (_deviceFound)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.check_circle, color: Colors.green),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      "Device Found",
-                                      style: TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      "Device is ready to be paired with the patient",
-                                      style: TextStyle(color: Colors.green[700]),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: primaryColor),
                         ),
                       ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Colors.blue),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Please enter the device serial number printed on the device",
+                              style: TextStyle(color: Colors.blue[700]),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -477,7 +403,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
             
             // Submit Button
             ElevatedButton(
-              onPressed: _isLoading || !_deviceFound ? null : _submitPairing,
+              onPressed: _isLoading ? null : _submitPairing,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: whiteColor,
