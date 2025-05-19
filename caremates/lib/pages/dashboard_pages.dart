@@ -35,39 +35,95 @@ class _DashboardPageState extends State<DashboardPage> {
     'deviceId': 'CM-1234'
   };
 
+  // Dummy data for device status
+  bool isDeviceOn = true;
+  String deviceStatus = "Connected";
+  
   // Dummy data for distance tracking
   double currentDistance = 5.2; // in meters
   String distanceStatus = 'Normal';
   Color statusColor = Colors.green;
 
-  // Dummy data for schedule/to-do list
-  final List<Map<String, dynamic>> scheduleItems = [
-    {
-      'title': 'Minum obat',
-      'time': '08:00 AM',
-      'completed': true,
-    },
-    {
-      'title': 'Cek tekanan darah',
-      'time': '12:00 PM',
-      'completed': false,
-    },
-    {
-      'title': 'Jalan sore',
-      'time': '05:00 PM',
-      'completed': false,
-    },
-  ];
+  // Selected date for calendar
+  DateTime selectedDate = DateTime.now();
+  
+  // Dummy data for calendar events/tasks
+  final Map<DateTime, List<Map<String, dynamic>>> calendarEvents = {};
 
-  // Controller nambahin schedule item
+  // Controller for adding new task
   final TextEditingController _newTaskController = TextEditingController();
   final TextEditingController _newTimeController = TextEditingController();
+  final TextEditingController _taskDescriptionController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCalendarEvents();
+    _simulateDistanceUpdate();
+  }
 
   @override
   void dispose() {
     _newTaskController.dispose();
     _newTimeController.dispose();
+    _taskDescriptionController.dispose();
     super.dispose();
+  }
+
+  // Initialize some dummy events for the calendar
+  void _initializeCalendarEvents() {
+    final now = DateTime.now();
+    
+    // Today's events
+    final today = DateTime(now.year, now.month, now.day);
+    calendarEvents[today] = [
+      {
+        'title': 'Minum obat',
+        'time': '08:00 AM',
+        'description': 'Obat tekanan darah',
+        'completed': true,
+      },
+      {
+        'title': 'Cek tekanan darah',
+        'time': '12:00 PM',
+        'description': 'Catat hasil di buku monitoring',
+        'completed': false,
+      },
+      {
+        'title': 'Jalan sore',
+        'time': '05:00 PM',
+        'description': 'Jalan selama 15 menit dengan pendamping',
+        'completed': false,
+      },
+    ];
+    
+    // Tomorrow's events
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    calendarEvents[tomorrow] = [
+      {
+        'title': 'Terapi fisik',
+        'time': '09:00 AM',
+        'description': 'Latihan kekuatan otot tangan',
+        'completed': false,
+      },
+      {
+        'title': 'Minum obat',
+        'time': '08:00 PM',
+        'description': 'Obat tidur',
+        'completed': false,
+      },
+    ];
+    
+    // Day after tomorrow
+    final dayAfterTomorrow = DateTime(now.year, now.month, now.day + 2);
+    calendarEvents[dayAfterTomorrow] = [
+      {
+        'title': 'Dokter datang',
+        'time': '10:00 AM',
+        'description': 'Pemeriksaan rutin bulanan',
+        'completed': false,
+      },
+    ];
   }
 
   Future<void> _selectTime(BuildContext context) async {
@@ -82,16 +138,30 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _addScheduleItem() {
+  void _addCalendarEvent() {
     if (_newTaskController.text.isNotEmpty && _newTimeController.text.isNotEmpty) {
       setState(() {
-        scheduleItems.add({
+        // Initialize the day if it doesn't exist
+        if (!calendarEvents.containsKey(selectedDate)) {
+          calendarEvents[selectedDate] = [];
+        }
+        
+        // Add the new event
+        calendarEvents[selectedDate]!.add({
           'title': _newTaskController.text,
           'time': _newTimeController.text,
+          'description': _taskDescriptionController.text.isEmpty ? 
+              'No description' : _taskDescriptionController.text,
           'completed': false,
         });
+        
+        // Sort by time
+        calendarEvents[selectedDate]!.sort((a, b) => a['time'].compareTo(b['time']));
+        
+        // Clear controllers
         _newTaskController.clear();
         _newTimeController.clear();
+        _taskDescriptionController.clear();
       });
       Navigator.pop(context);
     }
@@ -102,7 +172,7 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Add New Task',
+          'Add New Assignment',
           style: TextStyle(
             color: primaryColor,
             fontWeight: FontWeight.bold,
@@ -115,7 +185,7 @@ class _DashboardPageState extends State<DashboardPage> {
               TextField(
                 controller: _newTaskController,
                 decoration: InputDecoration(
-                  labelText: 'Task',
+                  labelText: 'Assignment Title',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -138,6 +208,18 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _taskDescriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Description (Optional)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: Icon(Icons.description, color: primaryColor),
+                ),
+              ),
             ],
           ),
         ),
@@ -150,7 +232,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           ElevatedButton(
-            onPressed: _addScheduleItem,
+            onPressed: _addCalendarEvent,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
               foregroundColor: whiteColor,
@@ -166,9 +248,12 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _toggleTaskCompletion(int index) {
-    setState(() {
-      scheduleItems[index]['completed'] = !scheduleItems[index]['completed'];
-    });
+    if (calendarEvents.containsKey(selectedDate)) {
+      setState(() {
+        calendarEvents[selectedDate]![index]['completed'] = 
+            !calendarEvents[selectedDate]![index]['completed'];
+      });
+    }
   }
 
   // Update jarak dari WebSocket
@@ -191,20 +276,46 @@ class _DashboardPageState extends State<DashboardPage> {
             distanceStatus = 'Alert';
             statusColor = Colors.red;
           }
+          
+          // Simulate random device disconnections (5% chance)
+          if (Random().nextInt(20) == 0) {
+            isDeviceOn = !isDeviceOn;
+            deviceStatus = isDeviceOn ? "Connected" : "Disconnected";
+          }
         });
         _simulateDistanceUpdate(); 
       }
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _simulateDistanceUpdate();
+  // Calendar date selection
+  void _onDaySelected(DateTime day, DateTime focusedDay) {
+    setState(() {
+      selectedDate = DateTime(day.year, day.month, day.day);
+    });
   }
+
+  // Format a date as a string
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    
+    if (date == today) {
+      return "Today, ${DateFormat('d MMM').format(date)}";
+    } else if (date == tomorrow) {
+      return "Tomorrow, ${DateFormat('d MMM').format(date)}";
+    } else {
+      return DateFormat('EEEE, d MMM').format(date);
+    }
+  }
+  
+  // Check if a date has events
 
   @override
   Widget build(BuildContext context) {
+    final eventsForSelectedDate = calendarEvents[selectedDate] ?? [];
+    
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -216,11 +327,13 @@ class _DashboardPageState extends State<DashboardPage> {
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
+              // Notification functionality
             },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
+              // Settings functionality
             },
           ),
         ],
@@ -307,7 +420,7 @@ class _DashboardPageState extends State<DashboardPage> {
               
               const SizedBox(height: 24),
               
-              // Distance Tracking Card
+              // Device Status Card
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -318,70 +431,95 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        'Patient Bracelet Status',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Text(
-                            'Distance Tracking',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor,
-                            ),
-                          ),
+                          // Device Status
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: statusColor),
+                              color: isDeviceOn ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDeviceOn ? Colors.green : Colors.red,
+                                width: 1,
+                              ),
                             ),
-                            child: Text(
-                              distanceStatus,
-                              style: TextStyle(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  isDeviceOn ? Icons.power : Icons.power_off,
+                                  color: isDeviceOn ? Colors.green : Colors.red,
+                                  size: 36,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  deviceStatus,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDeviceOn ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          // Distance Status
+                          Container(
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
                                 color: statusColor,
-                                fontWeight: FontWeight.bold,
+                                width: 1,
                               ),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  color: statusColor,
+                                  size: 36,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${currentDistance.toStringAsFixed(1)} meters',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: statusColor,
+                                  ),
+                                ),
+                                Text(
+                                  distanceStatus,
+                                  style: TextStyle(
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 48,
-                            color: statusColor,
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${currentDistance.toStringAsFixed(1)} meters',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Last updated: ${DateFormat('hh:mm a').format(DateTime.now())}',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      LinearProgressIndicator(
-                        value: (50 - currentDistance) / 50, // Inverse relationship - closer is better
-                        backgroundColor: Colors.grey[300],
-                        color: statusColor,
+                      const SizedBox(height: 12),
+                      Text(
+                        'Last updated: ${DateFormat('hh:mm a').format(DateTime.now())}',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -390,7 +528,7 @@ class _DashboardPageState extends State<DashboardPage> {
               
               const SizedBox(height: 24),
               
-              // To-Do List Card
+              // Calendar and Tasks Card
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -405,7 +543,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Jadwal & Tasks',
+                            'Caregiver Schedule',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -418,95 +556,200 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      ...scheduleItems.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final item = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: item['completed'] 
-                                  ? Colors.green.withOpacity(0.1) 
-                                  : Colors.grey.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: item['completed'] 
-                                    ? Colors.green.withOpacity(0.5) 
-                                    : Colors.grey.withOpacity(0.5),
-                              ),
+                      const SizedBox(height: 16),
+                      
+                      // Simple Calendar
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TableCalendar(
+                          firstDay: DateTime.utc(2010, 10, 16),
+                          lastDay: DateTime.utc(2030, 3, 14),
+                          focusedDay: selectedDate,
+                          selectedDayPredicate: (day) {
+                            return isSameDay(selectedDate, day);
+                          },
+                          onDaySelected: _onDaySelected,
+                          calendarStyle: CalendarStyle(
+                            markersMaxCount: 3,
+                            markerDecoration: BoxDecoration(
+                              color: primaryColor,
+                              shape: BoxShape.circle,
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            child: Row(
+                            selectedDecoration: BoxDecoration(
+                              color: primaryColor,
+                              shape: BoxShape.circle,
+                            ),
+                            todayDecoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.5),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          headerStyle: HeaderStyle(
+                            formatButtonVisible: false,
+                            titleCentered: true,
+                            titleTextStyle: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          eventLoader: (day) {
+                            final normalizedDay = DateTime(day.year, day.month, day.day);
+                            return calendarEvents[normalizedDay] ?? [];
+                          },
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Selected day events/tasks
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.blue.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Checkbox(
-                                  value: item['completed'],
-                                  activeColor: primaryColor,
-                                  onChanged: (_) => _toggleTaskCompletion(index),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['title'],
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          decoration: item['completed'] 
-                                              ? TextDecoration.lineThrough 
-                                              : null,
-                                          color: item['completed'] 
-                                              ? Colors.grey[600] 
-                                              : Colors.black,
-                                        ),
-                                      ),
-                                      Text(
-                                        item['time'],
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
+                                Text(
+                                  _formatDate(selectedDate),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                    fontSize: 16,
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  onPressed: () {
-                                    setState(() {
-                                      scheduleItems.removeAt(index);
-                                    });
-                                  },
+                                Text(
+                                  "${eventsForSelectedDate.length} assignments",
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      }),
-                      if (scheduleItems.isEmpty)
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Tasks for selected day
+                      if (eventsForSelectedDate.isNotEmpty)
+                        ...eventsForSelectedDate.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final item = entry.value;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: item['completed'] 
+                                    ? Colors.green.withOpacity(0.1) 
+                                    : Colors.grey.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: item['completed'] 
+                                      ? Colors.green.withOpacity(0.5) 
+                                      : Colors.grey.withOpacity(0.5),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Checkbox(
+                                    value: item['completed'],
+                                    activeColor: primaryColor,
+                                    onChanged: (_) => _toggleTaskCompletion(index),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                item['title'],
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                  decoration: item['completed'] 
+                                                      ? TextDecoration.lineThrough 
+                                                      : null,
+                                                  color: item['completed'] 
+                                                      ? Colors.grey[600] 
+                                                      : Colors.black,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              item['time'],
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.grey[700],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          item['description'] ?? 'No description',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    onPressed: () {
+                                      setState(() {
+                                        calendarEvents[selectedDate]!.removeAt(index);
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        })
+                      else
                         Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(16.0),
+                            padding: const EdgeInsets.all(20.0),
                             child: Column(
                               children: [
                                 Icon(
-                                  Icons.task_alt,
+                                  Icons.event_available,
                                   size: 48,
                                   color: Colors.grey[400],
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 12),
                                 Text(
-                                  'No tasks yet',
+                                  'No assignments for this day',
                                   style: TextStyle(
                                     color: Colors.grey[600],
+                                    fontSize: 16,
                                   ),
                                 ),
                                 TextButton(
                                   onPressed: _showAddTaskDialog,
                                   child: Text(
-                                    'Add a task',
+                                    'Add a new assignment',
                                     style: TextStyle(
                                       color: primaryColor,
                                     ),

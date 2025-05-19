@@ -110,7 +110,7 @@ class _RegisterPageState extends State<RegisterPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const DashboardPage(),
+            builder: (context) => const DevicePairingPage(),
           ),
         );
       } else {
