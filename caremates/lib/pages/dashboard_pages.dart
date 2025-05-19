@@ -443,89 +443,100 @@ class _DashboardPageState extends State<DashboardPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          // Device Status
-                          Container(
-                            width: MediaQuery.of(context).size.width * 0.4,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: isDeviceOn ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isDeviceOn ? Colors.green : Colors.red,
-                                width: 1,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  isDeviceOn ? Icons.power : Icons.power_off,
+                          // Device Status - Fixed Width
+                          Expanded(
+                            child: Container(
+                              height: 100, // Fixed height for both containers
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isDeviceOn ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
                                   color: isDeviceOn ? Colors.green : Colors.red,
-                                  size: 36,
+                                  width: 0.8,
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  deviceStatus,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    isDeviceOn ? Icons.power : Icons.power_off,
                                     color: isDeviceOn ? Colors.green : Colors.red,
+                                    size: 24,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    deviceStatus,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: isDeviceOn ? Colors.green : Colors.red,
+                                      fontSize: 13
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           
-                          // Distance Status
-                          Container(
-                            width: MediaQuery.of(context).size.width * 0.4,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: statusColor,
-                                width: 1,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
+                          // Distance Status - Fixed Width
+                          Expanded(
+                            child: Container(
+                              height: 100, // Fixed height for both containers
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: statusColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
                                   color: statusColor,
-                                  size: 36,
+                                  width: 0.8,
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${currentDistance.toStringAsFixed(1)} meters',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
                                     color: statusColor,
+                                    size: 24,
                                   ),
-                                ),
-                                Text(
-                                  distanceStatus,
-                                  style: TextStyle(
-                                    color: statusColor,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${currentDistance.toStringAsFixed(1)} meters',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: statusColor,
+                                      fontSize: 13
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Text(
+                                    distanceStatus,
+                                    style: TextStyle(
+                                      color: statusColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        'Last updated: ${DateFormat('hh:mm a').format(DateTime.now())}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 12,
+                      Center(
+                        child: Text(
+                          'Last updated: ${DateFormat('hh:mm a').format(DateTime.now())}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
               
               // Calendar and Tasks Card
