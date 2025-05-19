@@ -86,11 +86,12 @@ class _RegisterPageState extends State<RegisterPage> {
     try {
       // Call auth service
       final success = await AuthService.register(
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
-        _confirmPasswordController.text,
-      );
+      nama: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      noTelepon: "08123456789",
+      password: _passwordController.text,
+      role: "caregiver",
+    );
 
       if (success) {
         if (!mounted) return;

@@ -1,22 +1,22 @@
 part of 'pages.dart';
 
-// Simul Authentication - buat connect ke Backend
-class AuthService {
-  static Future<bool> login(String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1));
+// // Simul Authentication - buat connect ke Backend
+// class AuthService {
+//   static Future<bool> login(String email, String password) async {
+//     await Future.delayed(const Duration(seconds: 1));
     
-    return email.isNotEmpty && password.isNotEmpty;
-  }
+//     return email.isNotEmpty && password.isNotEmpty;
+//   }
   
-  static Future<bool> register(String name, String email, String password, String confirmPassword) async {
-    await Future.delayed(const Duration(seconds: 1));
+//   static Future<bool> register(String name, String email, String password, String confirmPassword) async {
+//     await Future.delayed(const Duration(seconds: 1));
     
-    return name.isNotEmpty && 
-           email.isNotEmpty && 
-           password.isNotEmpty && 
-           password == confirmPassword;
-  }
-}
+//     return name.isNotEmpty && 
+//            email.isNotEmpty && 
+//            password.isNotEmpty && 
+//            password == confirmPassword;
+//   }
+// }
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});

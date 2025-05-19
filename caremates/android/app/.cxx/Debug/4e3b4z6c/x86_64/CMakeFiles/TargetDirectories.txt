@@ -1,0 +1,2 @@
+C:/Users/LENOVO/Documents/OneDrive/Documents/Kuliah Semester 6/Reksti/CareMates-Mobile/caremates/android/app/.cxx/Debug/4e3b4z6c/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/LENOVO/Documents/OneDrive/Documents/Kuliah Semester 6/Reksti/CareMates-Mobile/caremates/android/app/.cxx/Debug/4e3b4z6c/x86_64/CMakeFiles/rebuild_cache.dir
