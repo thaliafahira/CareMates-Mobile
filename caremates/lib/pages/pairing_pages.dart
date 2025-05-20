@@ -16,11 +16,16 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
   String? _selectedDisease;
   bool _isLoading = false;
   String? _errorMessage;
-  
-  // List of diseases from your database model
+
   final List<String> _diseases = [
-    "Hipertensi", "Diabetes", "Asma", "Jantung", 
-    "Stroke", "Arthritis", "Kanker", "Pneumonia"
+    "Hipertensi",
+    "Diabetes",
+    "Asma",
+    "Jantung",
+    "Stroke",
+    "Arthritis",
+    "Kanker",
+    "Pneumonia"
   ];
 
   @override
@@ -50,7 +55,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
         );
       },
     );
-    
+
     if (picked != null && picked != _birthDate) {
       setState(() {
         _birthDate = picked;
@@ -59,13 +64,13 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
   }
 
   Future<void> _submitPairing() async {
-    // Reset error message
+    // Reset error message and set loading state
     setState(() {
       _errorMessage = null;
       _isLoading = true;
     });
 
-    // Validate all fields
+    // Validate form fields
     if (_patientNameController.text.isEmpty ||
         _addressController.text.isEmpty ||
         _deviceIdController.text.isEmpty ||
@@ -80,21 +85,50 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
     }
 
     try {
-      // Simulate API call for device pairing
-      await Future.delayed(const Duration(seconds: 2));
-      
+      // First, pair the patient
+      final patientSuccess = await PairingService.pairPatient(
+        name: _patientNameController.text,
+        address: _addressController.text,
+        gender: _selectedGender!,
+        birthDate: _birthDate!,
+        disease: _selectedDisease!,
+        deviceId: _deviceIdController.text,
+      );
+
+      if (!patientSuccess) {
+        setState(() {
+          _errorMessage = "Failed to register patient. Please try again.";
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Then, pair the device
+      final deviceSuccess = await PairingService.pairDevice(
+        serialNumber: _deviceIdController.text,
+        tipe: "gelang", // Default value as shown in your PairingService
+        status: "non-aktif", // Default value as shown in your PairingService
+      );
+
+      if (!deviceSuccess) {
+        setState(() {
+          _errorMessage =
+              "Patient registered but device pairing failed. Please try again with the device.";
+          _isLoading = false;
+        });
+        return;
+      }
+
       if (mounted) {
-        // Navigate to dashboard on success
+        // Navigate to Dashboard if both pairing operations are successful
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const DashboardPage(),
-          ),
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
         );
       }
     } catch (e) {
       setState(() {
-        _errorMessage = "An error occurred during device pairing. Please try again.";
+        _errorMessage = "An error occurred: ${e.toString()}";
         _isLoading = false;
       });
     }
@@ -127,9 +161,9 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             Text(
               "Connect Patient with Device",
               style: TextStyle(
@@ -146,9 +180,9 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                 color: Colors.grey[600],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Error message display
             if (_errorMessage != null)
               Container(
@@ -172,7 +206,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                   ],
                 ),
               ),
-            
+
             // Patient Information Section
             Card(
               shape: RoundedRectangleBorder(
@@ -193,7 +227,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Patient Name
                     TextField(
                       controller: _patientNameController,
@@ -215,21 +249,21 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Birth Date
                     GestureDetector(
                       onTap: () => _selectDate(context),
                       child: AbsorbPointer(
                         child: TextField(
                           controller: TextEditingController(
-                            text: _birthDate != null 
-                                ? DateFormat('dd-MM-yyyy').format(_birthDate!) 
-                                : ''
-                          ),
+                              text: _birthDate != null
+                                  ? DateFormat('dd-MM-yyyy').format(_birthDate!)
+                                  : ''),
                           decoration: InputDecoration(
                             labelText: "Birth Date",
                             labelStyle: TextStyle(color: Colors.grey[600]),
-                            prefixIcon: Icon(Icons.calendar_today, color: primaryColor),
+                            prefixIcon:
+                                Icon(Icons.calendar_today, color: primaryColor),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -246,7 +280,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Gender
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -257,23 +291,27 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
-                          hint: Text("Select Gender", style: TextStyle(color: Colors.grey[600])),
+                          hint: Text("Select Gender",
+                              style: TextStyle(color: Colors.grey[600])),
                           value: _selectedGender,
                           items: const [
-                            DropdownMenuItem(value: "L", child: Text("Male (L)")),
-                            DropdownMenuItem(value: "P", child: Text("Female (P)")),
+                            DropdownMenuItem(
+                                value: "L", child: Text("Male (L)")),
+                            DropdownMenuItem(
+                                value: "P", child: Text("Female (P)")),
                           ],
                           onChanged: (value) {
                             setState(() {
                               _selectedGender = value;
                             });
                           },
-                          icon: Icon(Icons.arrow_drop_down, color: primaryColor),
+                          icon:
+                              Icon(Icons.arrow_drop_down, color: primaryColor),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Address
                     TextField(
                       controller: _addressController,
@@ -295,7 +333,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Disease
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -306,7 +344,8 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
-                          hint: Text("Select Disease", style: TextStyle(color: Colors.grey[600])),
+                          hint: Text("Select Disease",
+                              style: TextStyle(color: Colors.grey[600])),
                           value: _selectedDisease,
                           items: _diseases.map((disease) {
                             return DropdownMenuItem(
@@ -319,7 +358,8 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                               _selectedDisease = value;
                             });
                           },
-                          icon: Icon(Icons.arrow_drop_down, color: primaryColor),
+                          icon:
+                              Icon(Icons.arrow_drop_down, color: primaryColor),
                         ),
                       ),
                     ),
@@ -327,9 +367,9 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Device Pairing Section
             Card(
               shape: RoundedRectangleBorder(
@@ -350,7 +390,6 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
                     TextField(
                       controller: _deviceIdController,
                       decoration: InputDecoration(
@@ -371,9 +410,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 16),
-                    
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -398,9 +435,9 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Submit Button
             ElevatedButton(
               onPressed: _isLoading ? null : _submitPairing,
@@ -413,45 +450,45 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                 ),
                 disabledBackgroundColor: Colors.grey,
               ),
-              child: _isLoading 
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: whiteColor,
-                          strokeWidth: 2,
+              child: _isLoading
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: whiteColor,
+                            strokeWidth: 2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        "Pairing device...",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: whiteColor,
+                        const SizedBox(width: 10),
+                        Text(
+                          "Pairing device...",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: whiteColor,
+                          ),
                         ),
+                      ],
+                    )
+                  : const Text(
+                      "Complete Setup",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  )
-                : const Text(
-                    "Complete Setup",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
             ),
-            
+
             const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildStepCircle(int step, bool isActive, String label) {
     return Expanded(
       child: Column(
@@ -487,7 +524,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
       ),
     );
   }
-  
+
   Widget _buildStepLine(bool isActive) {
     return Expanded(
       child: Container(

@@ -4,16 +4,16 @@ part of 'pages.dart';
 // class AuthService {
 //   static Future<bool> login(String email, String password) async {
 //     await Future.delayed(const Duration(seconds: 1));
-    
+
 //     return email.isNotEmpty && password.isNotEmpty;
 //   }
-  
+
 //   static Future<bool> register(String name, String email, String password, String confirmPassword) async {
 //     await Future.delayed(const Duration(seconds: 1));
-    
-//     return name.isNotEmpty && 
-//            email.isNotEmpty && 
-//            password.isNotEmpty && 
+
+//     return name.isNotEmpty &&
+//            email.isNotEmpty &&
+//            password.isNotEmpty &&
 //            password == confirmPassword;
 //   }
 // }
@@ -38,7 +38,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // Dummy data for device status
   bool isDeviceOn = true;
   String deviceStatus = "Connected";
-  
+
   // Dummy data for distance tracking
   double currentDistance = 5.2; // in meters
   String distanceStatus = 'Normal';
@@ -46,14 +46,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Selected date for calendar
   DateTime selectedDate = DateTime.now();
-  
+
   // Dummy data for calendar events/tasks
   final Map<DateTime, List<Map<String, dynamic>>> calendarEvents = {};
 
   // Controller for adding new task
   final TextEditingController _newTaskController = TextEditingController();
   final TextEditingController _newTimeController = TextEditingController();
-  final TextEditingController _taskDescriptionController = TextEditingController();
+  final TextEditingController _taskDescriptionController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -73,7 +74,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // Initialize some dummy events for the calendar
   void _initializeCalendarEvents() {
     final now = DateTime.now();
-    
+
     // Today's events
     final today = DateTime(now.year, now.month, now.day);
     calendarEvents[today] = [
@@ -96,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
         'completed': false,
       },
     ];
-    
+
     // Tomorrow's events
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
     calendarEvents[tomorrow] = [
@@ -113,7 +114,7 @@ class _DashboardPageState extends State<DashboardPage> {
         'completed': false,
       },
     ];
-    
+
     // Day after tomorrow
     final dayAfterTomorrow = DateTime(now.year, now.month, now.day + 2);
     calendarEvents[dayAfterTomorrow] = [
@@ -139,25 +140,28 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _addCalendarEvent() {
-    if (_newTaskController.text.isNotEmpty && _newTimeController.text.isNotEmpty) {
+    if (_newTaskController.text.isNotEmpty &&
+        _newTimeController.text.isNotEmpty) {
       setState(() {
         // Initialize the day if it doesn't exist
         if (!calendarEvents.containsKey(selectedDate)) {
           calendarEvents[selectedDate] = [];
         }
-        
+
         // Add the new event
         calendarEvents[selectedDate]!.add({
           'title': _newTaskController.text,
           'time': _newTimeController.text,
-          'description': _taskDescriptionController.text.isEmpty ? 
-              'No description' : _taskDescriptionController.text,
+          'description': _taskDescriptionController.text.isEmpty
+              ? 'No description'
+              : _taskDescriptionController.text,
           'completed': false,
         });
-        
+
         // Sort by time
-        calendarEvents[selectedDate]!.sort((a, b) => a['time'].compareTo(b['time']));
-        
+        calendarEvents[selectedDate]!
+            .sort((a, b) => a['time'].compareTo(b['time']));
+
         // Clear controllers
         _newTaskController.clear();
         _newTimeController.clear();
@@ -250,7 +254,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void _toggleTaskCompletion(int index) {
     if (calendarEvents.containsKey(selectedDate)) {
       setState(() {
-        calendarEvents[selectedDate]![index]['completed'] = 
+        calendarEvents[selectedDate]![index]['completed'] =
             !calendarEvents[selectedDate]![index]['completed'];
       });
     }
@@ -263,9 +267,10 @@ class _DashboardPageState extends State<DashboardPage> {
       if (mounted) {
         setState(() {
           // Simulate random distance changes
-          currentDistance = (currentDistance + (Random().nextDouble() * 2 - 1)).clamp(0.5, 50.0);
-          
-          // Update status 
+          currentDistance = (currentDistance + (Random().nextDouble() * 2 - 1))
+              .clamp(0.5, 50.0);
+
+          // Update status
           if (currentDistance < 10) {
             distanceStatus = 'Normal';
             statusColor = Colors.green;
@@ -276,14 +281,14 @@ class _DashboardPageState extends State<DashboardPage> {
             distanceStatus = 'Alert';
             statusColor = Colors.red;
           }
-          
+
           // Simulate random device disconnections (5% chance)
           if (Random().nextInt(20) == 0) {
             isDeviceOn = !isDeviceOn;
             deviceStatus = isDeviceOn ? "Connected" : "Disconnected";
           }
         });
-        _simulateDistanceUpdate(); 
+        _simulateDistanceUpdate();
       }
     });
   }
@@ -300,7 +305,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
-    
+
     if (date == today) {
       return "Today, ${DateFormat('d MMM').format(date)}";
     } else if (date == tomorrow) {
@@ -309,13 +314,13 @@ class _DashboardPageState extends State<DashboardPage> {
       return DateFormat('EEEE, d MMM').format(date);
     }
   }
-  
+
   // Check if a date has events
 
   @override
   Widget build(BuildContext context) {
     final eventsForSelectedDate = calendarEvents[selectedDate] ?? [];
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -345,7 +350,9 @@ class _DashboardPageState extends State<DashboardPage> {
             if (mounted) {
               setState(() {
                 // Update distance (ini demo aja)
-                currentDistance = (currentDistance + (Random().nextDouble() * 2 - 1)).clamp(0.5, 50.0);
+                currentDistance =
+                    (currentDistance + (Random().nextDouble() * 2 - 1))
+                        .clamp(0.5, 50.0);
               });
             }
           },
@@ -406,20 +413,24 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(height: 16),
                       const Divider(),
                       const SizedBox(height: 8),
-                      _buildPatientInfoRow(Icons.cake, 'Birth Date', patientInfo['birthDate']),
+                      _buildPatientInfoRow(
+                          Icons.cake, 'Birth Date', patientInfo['birthDate']),
                       const SizedBox(height: 8),
-                      _buildPatientInfoRow(Icons.person, 'Gender', patientInfo['gender']),
+                      _buildPatientInfoRow(
+                          Icons.person, 'Gender', patientInfo['gender']),
                       const SizedBox(height: 8),
-                      _buildPatientInfoRow(Icons.medical_services, 'Illness', patientInfo['illness']),
+                      _buildPatientInfoRow(Icons.medical_services, 'Illness',
+                          patientInfo['illness']),
                       const SizedBox(height: 8),
-                      _buildPatientInfoRow(Icons.devices, 'Device ID', patientInfo['deviceId']),
+                      _buildPatientInfoRow(
+                          Icons.devices, 'Device ID', patientInfo['deviceId']),
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Device Status Card
               Card(
                 elevation: 2,
@@ -450,7 +461,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               margin: const EdgeInsets.only(right: 8),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isDeviceOn ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                color: isDeviceOn
+                                    ? Colors.green.withOpacity(0.1)
+                                    : Colors.red.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: isDeviceOn ? Colors.green : Colors.red,
@@ -462,23 +475,25 @@ class _DashboardPageState extends State<DashboardPage> {
                                 children: [
                                   Icon(
                                     isDeviceOn ? Icons.power : Icons.power_off,
-                                    color: isDeviceOn ? Colors.green : Colors.red,
+                                    color:
+                                        isDeviceOn ? Colors.green : Colors.red,
                                     size: 24,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     deviceStatus,
                                     style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isDeviceOn ? Colors.green : Colors.red,
-                                      fontSize: 13
-                                    ),
+                                        fontWeight: FontWeight.bold,
+                                        color: isDeviceOn
+                                            ? Colors.green
+                                            : Colors.red,
+                                        fontSize: 13),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                          
+
                           // Distance Status - Fixed Width
                           Expanded(
                             child: Container(
@@ -505,10 +520,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                   Text(
                                     '${currentDistance.toStringAsFixed(1)} meters',
                                     style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: statusColor,
-                                      fontSize: 13
-                                    ),
+                                        fontWeight: FontWeight.bold,
+                                        color: statusColor,
+                                        fontSize: 13),
                                   ),
                                   Text(
                                     distanceStatus,
@@ -538,7 +552,7 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
 
               const SizedBox(height: 24),
-              
+
               // Calendar and Tasks Card
               Card(
                 elevation: 2,
@@ -568,7 +582,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Simple Calendar
                       Container(
                         decoration: BoxDecoration(
@@ -608,14 +622,15 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                           ),
                           eventLoader: (day) {
-                            final normalizedDay = DateTime(day.year, day.month, day.day);
+                            final normalizedDay =
+                                DateTime(day.year, day.month, day.day);
                             return calendarEvents[normalizedDay] ?? [];
                           },
                         ),
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       // Selected day events/tasks
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -651,9 +666,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           ],
                         ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Tasks for selected day
                       if (eventsForSelectedDate.isNotEmpty)
                         ...eventsForSelectedDate.asMap().entries.map((entry) {
@@ -663,29 +678,32 @@ class _DashboardPageState extends State<DashboardPage> {
                             padding: const EdgeInsets.only(bottom: 12.0),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: item['completed'] 
-                                    ? Colors.green.withOpacity(0.1) 
+                                color: item['completed']
+                                    ? Colors.green.withOpacity(0.1)
                                     : Colors.grey.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: item['completed'] 
-                                      ? Colors.green.withOpacity(0.5) 
+                                  color: item['completed']
+                                      ? Colors.green.withOpacity(0.5)
                                       : Colors.grey.withOpacity(0.5),
                                 ),
                               ),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Checkbox(
                                     value: item['completed'],
                                     activeColor: primaryColor,
-                                    onChanged: (_) => _toggleTaskCompletion(index),
+                                    onChanged: (_) =>
+                                        _toggleTaskCompletion(index),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
@@ -695,11 +713,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w500,
-                                                  decoration: item['completed'] 
-                                                      ? TextDecoration.lineThrough 
+                                                  decoration: item['completed']
+                                                      ? TextDecoration
+                                                          .lineThrough
                                                       : null,
-                                                  color: item['completed'] 
-                                                      ? Colors.grey[600] 
+                                                  color: item['completed']
+                                                      ? Colors.grey[600]
                                                       : Colors.black,
                                                 ),
                                               ),
@@ -716,7 +735,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          item['description'] ?? 'No description',
+                                          item['description'] ??
+                                              'No description',
                                           style: TextStyle(
                                             fontSize: 13,
                                             color: Colors.grey[600],
@@ -726,10 +746,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                     ),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: Colors.red),
                                     onPressed: () {
                                       setState(() {
-                                        calendarEvents[selectedDate]!.removeAt(index);
+                                        calendarEvents[selectedDate]!
+                                            .removeAt(index);
                                       });
                                     },
                                   ),

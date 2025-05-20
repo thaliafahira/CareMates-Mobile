@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://10.0.2.2:8000'; 
+  static const String baseUrl = 'http://10.0.2.2:8000';
+  static final storage = FlutterSecureStorage();
 
   static Future<bool> login(String email, String password) async {
     try {
@@ -16,20 +18,17 @@ class AuthService {
         }),
       );
 
-      print('Status code: ${response.statusCode}');
-      print('Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final accessToken = data['access_token'];
-        print('Access Token: $accessToken');
+        await storage.write(key: 'access_token', value: accessToken);
         return accessToken != null; // true if token exists
       } else {
-        print('Login failed: ${response.body}');
+        // print('Login failed: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('Error during login: $e');
+      // print('Error during login: $e');
       return false;
     }
   }
@@ -61,16 +60,26 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final token = data['access_token'];
-        print("Registered! Token: $token");
+        final accessToken = data['access_token'];
+        await storage.write(key: 'access_token', value: accessToken);
+        // print("Registered! Token: $token");
         return true;
       } else {
-        print("Register failed: ${response.body}");
+        // print("Register failed: ${response.body}");
         return false;
       }
     } catch (e) {
-      print("Register error: $e");
+      // print("Register error: $e");
       throw Exception("Failed to register");
+    }
+  }
+
+  static Future<bool> logout() async {
+    try {
+      await storage.delete(key: 'access_token');
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }
