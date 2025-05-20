@@ -10,7 +10,7 @@ class DevicePairingPage extends StatefulWidget {
 class _DevicePairingPageState extends State<DevicePairingPage> {
   final TextEditingController _patientNameController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _deviceIdController = TextEditingController();
+  final TextEditingController _serialNumberController = TextEditingController();
   DateTime? _birthDate;
   String? _selectedGender;
   String? _selectedDisease;
@@ -32,7 +32,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
   void dispose() {
     _patientNameController.dispose();
     _addressController.dispose();
-    _deviceIdController.dispose();
+    _serialNumberController.dispose();
     super.dispose();
   }
 
@@ -73,7 +73,7 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
     // Validate form fields
     if (_patientNameController.text.isEmpty ||
         _addressController.text.isEmpty ||
-        _deviceIdController.text.isEmpty ||
+        _serialNumberController.text.isEmpty ||
         _birthDate == null ||
         _selectedGender == null ||
         _selectedDisease == null) {
@@ -391,9 +391,9 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
                     ),
                     const SizedBox(height: 16),
                     TextField(
-                      controller: _deviceIdController,
+                      controller: _serialNumberController,
                       decoration: InputDecoration(
-                        labelText: "Device ID",
+                        labelText: "Serial Number",
                         labelStyle: TextStyle(color: Colors.grey[600]),
                         prefixIcon: Icon(Icons.device_hub, color: primaryColor),
                         hintText: "Enter device serial number (e.g. SN001)",
