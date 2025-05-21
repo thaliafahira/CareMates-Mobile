@@ -1,23 +1,5 @@
 part of 'pages.dart';
 
-// // Simul Authentication - buat connect ke Backend
-// class AuthService {
-//   static Future<bool> login(String email, String password) async {
-//     await Future.delayed(const Duration(seconds: 1));
-
-//     return email.isNotEmpty && password.isNotEmpty;
-//   }
-
-//   static Future<bool> register(String name, String email, String password, String confirmPassword) async {
-//     await Future.delayed(const Duration(seconds: 1));
-
-//     return name.isNotEmpty &&
-//            email.isNotEmpty &&
-//            password.isNotEmpty &&
-//            password == confirmPassword;
-//   }
-// }
-
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -27,13 +9,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   // Dummy data for patient info
-  final Map<String, dynamic> patientInfo = {
-    'name': 'Ujang',
-    'birthDate': '17-08-1945',
-    'gender': 'Pria',
-    'illness': 'Stroke',
-    'deviceId': 'CM-1234'
-  };
+  Map<String, dynamic>? patientInfo;
+  bool isLoading = true;
 
   // Dummy data for device status
   bool isDeviceOn = true;
@@ -46,9 +23,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Selected date for calendar
   DateTime selectedDate = DateTime.now();
-
-  // Dummy data for calendar events/tasks
   final Map<DateTime, List<Map<String, dynamic>>> calendarEvents = {};
+  // Dummy data for calendar events/tasks
+  List<Map<String, dynamic>> get eventsForSelectedDate =>
+      calendarEvents[selectedDate] ?? [];
 
   // Controller for adding new task
   final TextEditingController _newTaskController = TextEditingController();
@@ -60,6 +38,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _initializeCalendarEvents();
+    _fetchPatientInfo();
     _simulateDistanceUpdate();
   }
 
@@ -127,47 +106,88 @@ class _DashboardPageState extends State<DashboardPage> {
     ];
   }
 
+  TimeOfDay? _selectedTime;
+
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
+
     if (picked != null) {
       setState(() {
-        _newTimeController.text = picked.format(context);
+        _selectedTime = picked;
+        _newTimeController.text = picked.format(context); // shows readable time
       });
     }
   }
 
-  void _addCalendarEvent() {
-    if (_newTaskController.text.isNotEmpty &&
-        _newTimeController.text.isNotEmpty) {
+  Future<void> _fetchPatientInfo() async {
+    final data = await PatientService.getMyPatientInfo();
+    if (mounted) {
       setState(() {
-        // Initialize the day if it doesn't exist
-        if (!calendarEvents.containsKey(selectedDate)) {
-          calendarEvents[selectedDate] = [];
-        }
-
-        // Add the new event
-        calendarEvents[selectedDate]!.add({
-          'title': _newTaskController.text,
-          'time': _newTimeController.text,
-          'description': _taskDescriptionController.text.isEmpty
-              ? 'No description'
-              : _taskDescriptionController.text,
-          'completed': false,
-        });
-
-        // Sort by time
-        calendarEvents[selectedDate]!
-            .sort((a, b) => a['time'].compareTo(b['time']));
-
-        // Clear controllers
-        _newTaskController.clear();
-        _newTimeController.clear();
-        _taskDescriptionController.clear();
+        patientInfo = data;
+        isLoading = false;
       });
-      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _addCalendarEvent() async {
+    final title = _newTaskController.text.trim();
+    final description = _taskDescriptionController.text.trim();
+    final time = _newTimeController.text.trim();
+
+    if (title.isEmpty || _selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter title and time')),
+      );
+      return;
+    }
+
+    final selectedDay = selectedDate;
+
+    // Combine selected date and time into a DateTime object
+    final parsedTime = _selectedTime!;
+    final startDate = DateTime(
+      selectedDay.year,
+      selectedDay.month,
+      selectedDay.day,
+      parsedTime.hour,
+      parsedTime.minute,
+    );
+    final endDate = startDate.add(const Duration(hours: 1));
+
+    try {
+      // Step 1: Get the logged-in user ID
+      final userData = await AuthService.getCurrentUser();
+      if (userData == null || !mounted) return;
+      final userId = userData['id'];
+
+      // Step 3: Create the assignment
+      final newAssignment = await CaregiverAssignmentService.createAssignment(
+        patientId: userId,
+        title: title,
+        description: description,
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      if (!mounted) return;
+
+      if (newAssignment != null) {
+        _newTaskController.clear();
+        _taskDescriptionController.clear();
+        _newTimeController.clear();
+
+        Navigator.pop(context);
+
+        _onDaySelected(selectedDay, selectedDay); // Refresh tasks
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create assignment')),
+      );
     }
   }
 
@@ -293,11 +313,35 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  String _formatTimeRange(String start, String end) {
+    final startTime = DateTime.parse(start);
+    final endTime = DateTime.parse(end);
+    return "${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}"
+        " - ${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}";
+  }
+
   // Calendar date selection
-  void _onDaySelected(DateTime day, DateTime focusedDay) {
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) async {
     setState(() {
-      selectedDate = DateTime(day.year, day.month, day.day);
+      selectedDate = selectedDay;
     });
+
+    final assignments =
+        await CaregiverAssignmentService.getAssignmentsByDate(selectedDay);
+
+    if (assignments != null) {
+      setState(() {
+        calendarEvents[selectedDay] = assignments
+            .map((e) => {
+                  'title': e['title'],
+                  'description': e['description'],
+                  'completed': false, // Or map e['status'] if exists
+                  'time':
+                      _formatTimeRange(e['tanggal_mulai'], e['tanggal_akhir']),
+                })
+            .toList();
+      });
+    }
   }
 
   // Format a date as a string
@@ -376,7 +420,11 @@ class _DashboardPageState extends State<DashboardPage> {
                             radius: 30,
                             backgroundColor: Colors.grey[300],
                             child: Text(
-                              patientInfo['name'].substring(0, 1),
+                              patientInfo?['nama']
+                                      ?.toString()
+                                      .substring(0, 1)
+                                      .toUpperCase() ??
+                                  '?',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -399,7 +447,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  patientInfo['name'],
+                                  patientInfo?['nama'] ?? '',
                                   style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w600,
@@ -413,17 +461,17 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(height: 16),
                       const Divider(),
                       const SizedBox(height: 8),
-                      _buildPatientInfoRow(
-                          Icons.cake, 'Birth Date', patientInfo['birthDate']),
+                      _buildPatientInfoRow(Icons.cake, 'Birth Date',
+                          patientInfo?['tanggal_lahir'] ?? '-'),
                       const SizedBox(height: 8),
-                      _buildPatientInfoRow(
-                          Icons.person, 'Gender', patientInfo['gender']),
+                      _buildPatientInfoRow(Icons.person, 'Gender',
+                          patientInfo?['jenis_kelamin'] ?? '-'),
                       const SizedBox(height: 8),
                       _buildPatientInfoRow(Icons.medical_services, 'Illness',
-                          patientInfo['illness']),
+                          patientInfo?['penyakit'] ?? '-'),
                       const SizedBox(height: 8),
-                      _buildPatientInfoRow(
-                          Icons.devices, 'Device ID', patientInfo['deviceId']),
+                      _buildPatientInfoRow(Icons.devices, 'Device ID',
+                          patientInfo?['device']?['serial_number'] ?? '-'),
                     ],
                   ),
                 ),

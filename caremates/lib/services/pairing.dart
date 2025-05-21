@@ -6,13 +6,12 @@ class PairingService {
   static const String baseUrl = 'http://10.0.2.2:8000';
   static final storage = FlutterSecureStorage();
 
-  static Future<bool> pairPatient({
+  static Future<int?> pairPatient({
     required String name,
     required String address,
     required String gender,
     required DateTime birthDate,
     required String disease,
-    required String deviceId,
   }) async {
     try {
       final token = await storage.read(key: 'access_token');
@@ -37,14 +36,13 @@ class PairingService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
+        final json = jsonDecode(response.body);
+        return json['id']; // Make sure your FastAPI returns patient.id
       } else {
-        //print("Failed to pair patient: ${response.statusCode} - ${response.body}");
-        return false;
+        return null;
       }
     } catch (e) {
-      //print("Error during pairing: $e");
-      return false;
+      return null;
     }
   }
 
@@ -75,6 +73,30 @@ class PairingService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return true;
     } else {
+      return false;
+    }
+  }
+
+  static Future<bool> assignPatientToUser(int patientId) async {
+    final token = await storage.read(key: 'access_token');
+
+    if (token == null) {
+      throw Exception('Token not found. Please log in again.');
+    }
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/v1/patients/assign_patient/$patientId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      // Optional: print error details for debugging
+      // print("Failed to assign patient: ${response.statusCode} - ${response.body}");
       return false;
     }
   }

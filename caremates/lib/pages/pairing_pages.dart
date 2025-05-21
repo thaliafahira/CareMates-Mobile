@@ -64,13 +64,11 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
   }
 
   Future<void> _submitPairing() async {
-    // Reset error message and set loading state
     setState(() {
       _errorMessage = null;
       _isLoading = true;
     });
 
-    // Validate form fields
     if (_patientNameController.text.isEmpty ||
         _addressController.text.isEmpty ||
         _serialNumberController.text.isEmpty ||
@@ -85,29 +83,20 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
     }
 
     try {
-      // First, pair the patient
-      final patientSuccess = await PairingService.pairPatient(
+      // Pair patient and get patient ID
+      final patientId = await PairingService.pairPatient(
         name: _patientNameController.text,
         address: _addressController.text,
         gender: _selectedGender!,
         birthDate: _birthDate!,
         disease: _selectedDisease!,
-        deviceId: _deviceIdController.text,
       );
 
-      if (!patientSuccess) {
-        setState(() {
-          _errorMessage = "Failed to register patient. Please try again.";
-          _isLoading = false;
-        });
-        return;
-      }
-
-      // Then, pair the device
+      // Pair device
       final deviceSuccess = await PairingService.pairDevice(
-        serialNumber: _deviceIdController.text,
-        tipe: "gelang", // Default value as shown in your PairingService
-        status: "non-aktif", // Default value as shown in your PairingService
+        serialNumber: _serialNumberController.text,
+        tipe: "gelang",
+        status: "non-aktif",
       );
 
       if (!deviceSuccess) {
@@ -119,8 +108,20 @@ class _DevicePairingPageState extends State<DevicePairingPage> {
         return;
       }
 
+      // Assign patient to user
+      final assignSuccess =
+          await PairingService.assignPatientToUser(patientId!);
+
+      if (!assignSuccess) {
+        setState(() {
+          _errorMessage =
+              "Patient and device paired but failed to assign patient to user.";
+          _isLoading = false;
+        });
+        return;
+      }
+
       if (mounted) {
-        // Navigate to Dashboard if both pairing operations are successful
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const DashboardPage()),

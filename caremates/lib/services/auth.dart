@@ -82,4 +82,24 @@ class AuthService {
       return false;
     }
   }
+
+  static Future<Map<String, dynamic>?> getCurrentUser() async {
+    final token = await storage.read(key: 'access_token');
+
+    if (token == null) return null;
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/v1/auth/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      return null;
+    }
+  }
 }
